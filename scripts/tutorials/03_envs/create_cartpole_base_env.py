@@ -70,7 +70,7 @@ class ObservationsCfg:
         joint_vel_rel = ObsTerm(func=mdp.joint_vel_rel)
 
         def __post_init__(self) -> None:
-            self.enable_corruption = False
+            self.enable_corruption = False # True인 경우 observation에 noise가 들어감
             self.concatenate_terms = True
 
     # observation groups
@@ -84,7 +84,7 @@ class EventCfg:
     # on startup
     add_pole_mass = EventTerm(
         func=mdp.randomize_rigid_body_mass,
-        mode="startup",
+        mode="startup", # startup, reset, interval 이 존재함
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names=["pole"]),
             "mass_distribution_params": (0.1, 0.5),

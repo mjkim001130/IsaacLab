@@ -106,10 +106,18 @@ def run_simulator(
             # root state
             # we offset the root state by the origin since the states are written in simulation world frame
             # if this is not done, then the robots will be spawned at the (0, 0, 0) of the simulation world
+
+            """
+            default_root_state -> (robot_num, 13)
+            (13) is consist with 
+            0:3  -> position (x, y, z)
+            3:7  -> quaternion (w, x, y, z)
+            7:10 -> linear velocity (vx, vy, vz)
+            10:13-> angular velocity (wx, wy, wz)"""
             root_state = robot.data.default_root_state.clone()
-            root_state[:, :3] += origins
-            robot.write_root_pose_to_sim(root_state[:, :7])
-            robot.write_root_velocity_to_sim(root_state[:, 7:])
+            root_state[:, :3] += origins 
+            robot.write_root_pose_to_sim(root_state[:, :7]) # xyz + 쿼터니안
+            robot.write_root_velocity_to_sim(root_state[:, 7:]) # 선속도 + 각속도
             # set joint positions with some noise
             joint_pos, joint_vel = robot.data.default_joint_pos.clone(), robot.data.default_joint_vel.clone()
             joint_pos += torch.rand_like(joint_pos) * 0.1
