@@ -95,7 +95,7 @@ def run_simulator(sim: sim_utils.SimulationContext, scene: InteractiveScene):
     # note: we only do this here for readability.
     robot = scene["robot"]
 
-    # Create controller
+    # Create controlle
     diff_ik_cfg = DifferentialIKControllerCfg(command_type="pose", use_relative_mode=False, ik_method="dls")
     diff_ik_controller = DifferentialIKController(diff_ik_cfg, num_envs=scene.num_envs, device=sim.device)
 
@@ -160,12 +160,12 @@ def run_simulator(sim: sim_utils.SimulationContext, scene: InteractiveScene):
         else:
             # obtain quantities from simulation
             jacobian = robot.root_physx_view.get_jacobians()[:, ee_jacobi_idx, :, robot_entity_cfg.joint_ids]
-            ee_pose_w = robot.data.body_pose_w[:, robot_entity_cfg.body_ids[0]]
-            root_pose_w = robot.data.root_pose_w
-            joint_pos = robot.data.joint_pos[:, robot_entity_cfg.joint_ids]
+            ee_pose_w = robot.data.body_pose_w[:, robot_entity_cfg.body_ids[0]] # world 기준의 ee pose
+            root_pose_w = robot.data.root_pose_w # world 기준의 root pose
+            joint_pos = robot.data.joint_pos[:, robot_entity_cfg.joint_ids] # 현재 robot 의 joint pose
             # compute frame in root frame
-            ee_pos_b, ee_quat_b = subtract_frame_transforms(
-                root_pose_w[:, 0:3], root_pose_w[:, 3:7], ee_pose_w[:, 0:3], ee_pose_w[:, 3:7]
+            ee_pos_b, ee_quat_b = subtract_frame_transforms( # Homogeneous transformation
+                root_pose_w[:, 0:3], root_pose_w[:, 3:7], ee_pose_w[:, 0:3], ee_pose_w[:, 3:7] 
             )
             # compute the joint commands
             joint_pos_des = diff_ik_controller.compute(ee_pos_b, ee_quat_b, jacobian, joint_pos)
