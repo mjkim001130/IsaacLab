@@ -39,6 +39,7 @@ def object_ee_distance(
     # Target object position: (num_envs, 3)
     cube_pos_w = object.data.root_pos_w
     # End-effector position: (num_envs, 3)
+    # target_pos_w를 가져오게 되면 모든 target frame의 world pos를 가져와서 (N, num, 3)이 됨
     ee_w = ee_frame.data.target_pos_w[..., 0, :]
     # Distance of the end-effector to the object: (num_envs,)
     object_ee_distance = torch.norm(cube_pos_w - ee_w, dim=1)

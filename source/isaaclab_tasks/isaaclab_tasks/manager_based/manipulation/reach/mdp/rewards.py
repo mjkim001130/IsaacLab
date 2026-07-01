@@ -26,9 +26,10 @@ def position_command_error(env: ManagerBasedRLEnv, command_name: str, asset_cfg:
     """
     # extract the asset (to enable type hinting)
     asset: RigidObject = env.scene[asset_cfg.name]
-    command = env.command_manager.get_command(command_name)
+    # [x, y, z, qw, qx, qy, qz]
+    command = env.command_manager.get_command(command_name) # Command 에서 생성한 ee_pose 가져옴 
     # obtain the desired and current positions
-    des_pos_b = command[:, :3]
+    des_pos_b = command[:, :3] # [x, y, z]
     des_pos_w, _ = combine_frame_transforms(asset.data.root_pos_w, asset.data.root_quat_w, des_pos_b)
     curr_pos_w = asset.data.body_pos_w[:, asset_cfg.body_ids[0]]  # type: ignore
     return torch.norm(curr_pos_w - des_pos_w, dim=1)

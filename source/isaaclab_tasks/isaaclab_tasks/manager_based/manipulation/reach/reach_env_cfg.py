@@ -7,10 +7,14 @@ from dataclasses import MISSING
 
 import isaaclab.sim as sim_utils
 from isaaclab.assets import ArticulationCfg, AssetBaseCfg
+
+# For Imtation setting
 from isaaclab.devices import DevicesCfg
 from isaaclab.devices.gamepad import Se3GamepadCfg
 from isaaclab.devices.keyboard import Se3KeyboardCfg
 from isaaclab.devices.spacemouse import Se3SpaceMouseCfg
+
+# For RL setting
 from isaaclab.envs import ManagerBasedRLEnvCfg
 from isaaclab.managers import ActionTermCfg as ActionTerm
 from isaaclab.managers import CurriculumTermCfg as CurrTerm
@@ -20,6 +24,8 @@ from isaaclab.managers import ObservationTermCfg as ObsTerm
 from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import TerminationTermCfg as DoneTerm
+
+# Default config
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.utils import configclass
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
@@ -70,12 +76,12 @@ class ReachSceneCfg(InteractiveSceneCfg):
 class CommandsCfg:
     """Command terms for the MDP."""
 
-    ee_pose = mdp.UniformPoseCommandCfg(
-        asset_name="robot",
-        body_name=MISSING,
-        resampling_time_range=(4.0, 4.0),
-        debug_vis=True,
-        ranges=mdp.UniformPoseCommandCfg.Ranges(
+    ee_pose = mdp.UniformPoseCommandCfg( # Uniform distribuion으로 desired pose sampling
+        asset_name="robot", 
+        body_name=MISSING, # robot마다 link or body의 이름이 다르므로 각 robot config에서 채움
+        resampling_time_range=(4.0, 4.0), # 4초마다 새로운 target pose sampling
+        debug_vis=True, 
+        ranges=mdp.UniformPoseCommandCfg.Ranges( # Sampling range
             pos_x=(0.35, 0.65),
             pos_y=(-0.2, 0.2),
             pos_z=(0.15, 0.5),
@@ -103,14 +109,14 @@ class ObservationsCfg:
         """Observations for policy group."""
 
         # observation terms (order preserved)
-        joint_pos = ObsTerm(func=mdp.joint_pos_rel, noise=Unoise(n_min=-0.01, n_max=0.01))
-        joint_vel = ObsTerm(func=mdp.joint_vel_rel, noise=Unoise(n_min=-0.01, n_max=0.01))
-        pose_command = ObsTerm(func=mdp.generated_commands, params={"command_name": "ee_pose"})
-        actions = ObsTerm(func=mdp.last_action)
+        joint_pos = ObsTerm(func=mdp.joint_pos_rel, noise=Unoise(n_min=-0.01, n_max=0.01)) # relative pos
+        joint_vel = ObsTerm(func=mdp.joint_vel_rel, noise=Unoise(n_min=-0.01, n_max=0.01)) # relative vel
+        pose_command = ObsTerm(func=mdp.generated_commands, params={"command_name": "ee_pose"}) # target pose
+        actions = ObsTerm(func=mdp.last_action) # a_{t-1}
 
         def __post_init__(self):
             self.enable_corruption = True
-            self.concatenate_terms = True
+            self.concatenate_terms = True # Concat pos,vel,pose_cmd,actions
 
     # observation groups
     policy: PolicyCfg = PolicyCfg()
@@ -124,7 +130,7 @@ class EventCfg:
         func=mdp.reset_joints_by_scale,
         mode="reset",
         params={
-            "position_range": (0.5, 1.5),
+            "position_range": (0.5, 1.5), # 기본 자세 각도에 0.5 ~ 1.5 배를 곱해서 initial pose 다양하게
             "velocity_range": (0.0, 0.0),
         },
     )
@@ -141,7 +147,7 @@ class RewardsCfg:
         params={"asset_cfg": SceneEntityCfg("robot", body_names=MISSING), "command_name": "ee_pose"},
     )
     end_effector_position_tracking_fine_grained = RewTerm(
-        func=mdp.position_command_error_tanh,
+        func=mdp.position_command_error_tanh, # fine-grained reward
         weight=0.1,
         params={"asset_cfg": SceneEntityCfg("robot", body_names=MISSING), "std": 0.1, "command_name": "ee_pose"},
     )
@@ -152,9 +158,9 @@ class RewardsCfg:
     )
 
     # action penalty
-    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-0.0001)
+    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-0.0001) # Smooth action
     joint_vel = RewTerm(
-        func=mdp.joint_vel_l2,
+        func=mdp.joint_vel_l2, # slowly command
         weight=-0.0001,
         params={"asset_cfg": SceneEntityCfg("robot")},
     )
@@ -168,7 +174,7 @@ class TerminationsCfg:
 
 
 @configclass
-class CurriculumCfg:
+class CurriculumCfg: # 초기엔 빠르게 목표 근처로 도달하게 학습하고, 어느정도 학습된 이후에는 부드럽게 움직이라는 curriculum learning
     """Curriculum terms for the MDP."""
 
     action_rate = CurrTerm(
@@ -204,12 +210,12 @@ class ReachEnvCfg(ManagerBasedRLEnvCfg):
     def __post_init__(self):
         """Post initialization."""
         # general settings
-        self.decimation = 2
+        self.decimation = 2 # Policy 30Hz
         self.sim.render_interval = self.decimation
         self.episode_length_s = 12.0
         self.viewer.eye = (3.5, 3.5, 3.5)
         # simulation settings
-        self.sim.dt = 1.0 / 60.0
+        self.sim.dt = 1.0 / 60.0 # sim 60Hz
 
         self.teleop_devices = DevicesCfg(
             devices={

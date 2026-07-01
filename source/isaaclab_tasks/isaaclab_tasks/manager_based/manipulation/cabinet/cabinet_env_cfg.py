@@ -62,10 +62,10 @@ class CabinetSceneCfg(InteractiveSceneCfg):
             pos=(0.8, 0, 0.4),
             rot=(0.0, 0.0, 0.0, 1.0),
             joint_pos={
-                "door_left_joint": 0.0,
-                "door_right_joint": 0.0,
-                "drawer_bottom_joint": 0.0,
-                "drawer_top_joint": 0.0,
+                "door_left_joint": 0.0, # -90 ~ 0
+                "door_right_joint": 0.0, # 0 ~ 90
+                "drawer_bottom_joint": 0.0, # 0 ~ 0.4
+                "drawer_top_joint": 0.0, # 0 ~ 0.4
             },
         ),
         actuators={
